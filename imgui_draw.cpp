@@ -1062,7 +1062,7 @@ void ImDrawList::PathArcTo(const ImVec2& center, float radius, float a_min, floa
     }
 }
 
-ImVec2 ImBezierCalc(const ImVec2& p1, const ImVec2& p2, const ImVec2& p3, const ImVec2& p4, float t)
+ImVec2 ImCubicBezierCalc(const ImVec2& p1, const ImVec2& p2, const ImVec2& p3, const ImVec2& p4, float t)
 {
     float u = 1.0f - t;
     float w1 = u*u*u;
@@ -1073,7 +1073,7 @@ ImVec2 ImBezierCalc(const ImVec2& p1, const ImVec2& p2, const ImVec2& p3, const 
 }
 
 // Closely mimics BezierClosestPointCasteljauStep() in imgui.cpp
-static void PathBezierToCasteljau(ImVector<ImVec2>* path, float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4, float tess_tol, int level)
+static void PathCubicBezierToCasteljau(ImVector<ImVec2>* path, float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4, float tess_tol, int level)
 {
     float dx = x4 - x1;
     float dy = y4 - y1;
@@ -1098,7 +1098,7 @@ static void PathBezierToCasteljau(ImVector<ImVec2>* path, float x1, float y1, fl
     }
 }
 
-void ImDrawList::PathBezierCurveTo(const ImVec2& p2, const ImVec2& p3, const ImVec2& p4, int num_segments)
+void ImDrawList::PathCubicBezierCurveTo(const ImVec2& p2, const ImVec2& p3, const ImVec2& p4, int num_segments)
 {
     ImVec2 p1 = _Path.back();
     if (num_segments == 0)
@@ -1109,7 +1109,49 @@ void ImDrawList::PathBezierCurveTo(const ImVec2& p2, const ImVec2& p3, const ImV
     {
         float t_step = 1.0f / (float)num_segments;
         for (int i_step = 1; i_step <= num_segments; i_step++)
-            _Path.push_back(ImBezierCalc(p1, p2, p3, p4, t_step * i_step));
+            _Path.push_back(ImCubicBezierCalc(p1, p2, p3, p4, t_step * i_step));
+    }
+}
+
+ImVec2 ImQuadBezierCalc(const ImVec2& p1, const ImVec2& p2, const ImVec2& p3, float t)
+{
+    float u = 1.0f - t;
+    float w1 = u * u;
+    float w2 = 2 * u * t;
+    float w3 = t * t;
+    return ImVec2(w1 * p1.x + w2 * p2.x + w3 * p3.x, w1 * p1.y + w2 * p2.y + w3 * p3.y);
+}
+
+static void PathQuadBezierToCasteljau(ImVector<ImVec2>* path, float x1, float y1, float x2, float y2, float x3, float y3, float tess_tol, int level)
+{
+    float dx = x3 - x1;
+    float dy = y3 - y1;
+    float dv = ((x2 - x3) * dy - (y2 - y3) * dx);
+    dv = (dv >= 0) ? dv : -dv;
+    if (dv * dv < tess_tol * (dx + dy))
+    {
+        path->push_back(ImVec2(x3, y3));
+    }
+    else if (level < 10)
+    {
+        float x12 = (x1+x2)*0.5f, y12 = (y1+y2)*0.5f;
+        float x23 = (x2+x3)*0.5f, y23 = (y2+y3)*0.5f;
+        PathQuadBezierToCasteljau(path, x1,y1, x12,y12, x23,y23, tess_tol, level+1);
+    }
+}
+
+void ImDrawList::PathQuadBezierCurveTo(const ImVec2& p2, const ImVec2& p3, int num_segments)
+{
+    ImVec2 p1 = _Path.back();
+    if (num_segments == 0)
+    {
+        PathQuadBezierToCasteljau(&_Path, p1.x, p1.y, p2.x, p2.y, p3.x, p3.y, _Data->CurveTessellationTol, 0); // Auto-tessellated
+    }
+    else
+    {
+        float t_step = 1.0f / (float) num_segments;
+        for (int i_step = 1; i_step <= num_segments; i_step++)
+            _Path.push_back(ImQuadBezierCalc(p1, p2, p3, t_step * i_step));
     }
 }
 
