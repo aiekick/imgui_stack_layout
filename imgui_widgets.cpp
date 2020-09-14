@@ -595,7 +595,6 @@ bool ImGui::ButtonBehavior(const ImRect& bb, ImGuiID id, bool* out_hovered, bool
         }
     }
 
-    // Process while held
     bool held = false;
     if (g.ActiveId == id)
     {
@@ -616,7 +615,6 @@ bool ImGui::ButtonBehavior(const ImRect& bb, ImGuiID id, bool* out_hovered, bool
                 bool release_anywhere = (flags & ImGuiButtonFlags_PressedOnClickReleaseAnywhere) != 0;
                 if ((release_in || release_anywhere) && !g.DragDropActive)
                 {
-                    // Report as pressed when releasing the mouse (this is the most common path)
                     bool is_double_click_release = (flags & ImGuiButtonFlags_PressedOnDoubleClick) && g.IO.MouseDownWasDoubleClick[mouse_button];
                     bool is_repeating_already = (flags & ImGuiButtonFlags_Repeat) && g.IO.MouseDownDurationPrev[mouse_button] >= g.IO.KeyRepeatDelay; // Repeat mode trumps <on release>
                     if (!is_double_click_release && !is_repeating_already)
@@ -629,7 +627,6 @@ bool ImGui::ButtonBehavior(const ImRect& bb, ImGuiID id, bool* out_hovered, bool
         }
         else if (g.ActiveIdSource == ImGuiInputSource_Nav)
         {
-            // When activated using Nav, we hold on the ActiveID until activation button is released
             if (g.NavActivateDownId != id)
                 ClearActiveID();
         }
@@ -685,7 +682,7 @@ bool ImGui::ButtonEx(const char* label, const ImVec2& size_arg, ImGuiButtonFlags
 
 bool ImGui::Button(const char* label, const ImVec2& size_arg)
 {
-    return ButtonEx(label, size_arg, ImGuiButtonFlags_None);
+    return ButtonEx(label, size_arg, 0);
 }
 
 // Small buttons fits within text without additional vertical spacing.
@@ -701,7 +698,7 @@ bool ImGui::SmallButton(const char* label)
 
 // Tip: use ImGui::PushID()/PopID() to push indices or pointers in the ID stack.
 // Then you can keep 'str_id' empty or the same for all your buttons (instead of creating a string based on a non-string id)
-bool ImGui::InvisibleButton(const char* str_id, const ImVec2& size_arg, ImGuiButtonFlags flags)
+bool ImGui::InvisibleButton(const char* str_id, const ImVec2& size_arg)
 {
     ImGuiWindow* window = GetCurrentWindow();
     if (window->SkipItems)
@@ -718,7 +715,7 @@ bool ImGui::InvisibleButton(const char* str_id, const ImVec2& size_arg, ImGuiBut
         return false;
 
     bool hovered, held;
-    bool pressed = ButtonBehavior(bb, id, &hovered, &held, flags);
+    bool pressed = ButtonBehavior(bb, id, &hovered, &held);
 
     return pressed;
 }
@@ -5205,9 +5202,9 @@ void ImGui::ColorPickerOptionsPopup(const float* ref_col, ImGuiColorEditFlags fl
             if (Selectable("##selectable", false, 0, picker_size)) // By default, Selectable() is closing popup
                 g.ColorEditOptions = (g.ColorEditOptions & ~ImGuiColorEditFlags__PickerMask) | (picker_flags & ImGuiColorEditFlags__PickerMask);
             SetCursorScreenPos(backup_pos);
-            ImVec4 previewing_ref_col;
-            memcpy(&previewing_ref_col, ref_col, sizeof(float) * ((picker_flags & ImGuiColorEditFlags_NoAlpha) ? 3 : 4));
-            ColorPicker4("##previewing_picker", &previewing_ref_col.x, picker_flags);
+            ImVec4 dummy_ref_col;
+            memcpy(&dummy_ref_col, ref_col, sizeof(float) * ((picker_flags & ImGuiColorEditFlags_NoAlpha) ? 3 : 4));
+            ColorPicker4("##dummypicker", &dummy_ref_col.x, picker_flags);
             PopID();
         }
         PopItemWidth();
@@ -5679,7 +5676,7 @@ bool ImGui::CollapsingHeader(const char* label, bool* p_open, ImGuiTreeNodeFlags
 // - Selectable()
 //-------------------------------------------------------------------------
 
-// Tip: pass a non-visible label (e.g. "##hello") then you can use the space to draw other text or image.
+// Tip: pass a non-visible label (e.g. "##dummy") then you can use the space to draw other text or image.
 // But you need to make sure the ID is unique, e.g. enclose calls in PushID/PopID or use ##unique_id.
 // With this scheme, ImGuiSelectableFlags_SpanAllColumns and ImGuiSelectableFlags_AllowItemOverlap are also frequently used flags.
 // FIXME: Selectable() with (size.x == 0.0f) and (SelectableTextAlign.x > 0.0f) followed by SameLine() is currently not supported.
@@ -7121,8 +7118,7 @@ bool    ImGui::TabItemEx(ImGuiTabBar* tab_bar, const char* label, bool* p_open, 
     const ImGuiStyle& style = g.Style;
     const ImGuiID id = TabBarCalcTabID(tab_bar, label);
 
-    // If the user called us with *p_open == false, we early out and don't render.
-    // We make a call to ItemAdd() so that attempts to use a contextual popup menu with an implicit ID won't use an older ID.
+    // If the user called us with *p_open == false, we early out and don't render. We make a dummy call to ItemAdd() so that attempts to use a contextual popup menu with an implicit ID won't use an older ID.
     IMGUI_TEST_ENGINE_ITEM_INFO(id, label, window->DC.LastItemStatusFlags);
     if (p_open && !*p_open)
     {
