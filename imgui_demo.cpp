@@ -7183,7 +7183,6 @@ static void ShowExampleAppCustomRendering(bool* p_open)
             ImVec2 canvas_p1 = ImVec2(canvas_p0.x + canvas_sz.x, canvas_p0.y + canvas_sz.y);
 
             // Draw border and background color
-            ImGuiIO& io = ImGui::GetIO();
             ImDrawList* draw_list = ImGui::GetWindowDrawList();
             draw_list->AddRectFilled(canvas_p0, canvas_p1, IM_COL32(50, 50, 50, 255));
             draw_list->AddRect(canvas_p0, canvas_p1, IM_COL32(255, 255, 255, 255));
