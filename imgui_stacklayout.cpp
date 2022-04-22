@@ -236,7 +236,7 @@ static void             AddLayoutSpring(ImGuiLayout& layout, float weight, float
 static ImGuiID GetContextID(ImGuiContext* context)
 {
     // Hash pointer to ImGuiContext which is unique
-    return ImHash(&context, sizeof(context));
+    return ImHashData(&context, sizeof(context), 0);
 }
 
 static ImGuiLayoutState* GetCurrentLayoutState()
@@ -287,7 +287,7 @@ static ImGuiLayoutState* CreateLayoutState(ImGuiID context_id, ImGuiContext* con
     return state;
 }
 
-static void StackLayout_NewFramePreCallback(ImGuiContext* ctx, ImGuiContextHook* hook)
+static void StackLayout_NewFramePreCallback(ImGuiContext* /*ctx*/, ImGuiContextHook* hook)
 {
     ImGuiLayoutState* layout_state = (ImGuiLayoutState*)hook->UserData;
 
@@ -299,7 +299,7 @@ static void StackLayout_NewFramePreCallback(ImGuiContext* ctx, ImGuiContextHook*
     }
 }
 
-static void StackLayout_EndFramePreCallback(ImGuiContext* ctx, ImGuiContextHook* hook)
+static void StackLayout_EndFramePreCallback(ImGuiContext* /*ctx*/, ImGuiContextHook* hook)
 {
     ImGuiLayoutState* layout_state = (ImGuiLayoutState*)hook->UserData;
 
@@ -311,7 +311,7 @@ static void StackLayout_EndFramePreCallback(ImGuiContext* ctx, ImGuiContextHook*
     }
 }
 
-static void StackLayout_ShutdownCallback(ImGuiContext* ctx, ImGuiContextHook* hook)
+static void StackLayout_ShutdownCallback(ImGuiContext* /*ctx*/, ImGuiContextHook* hook)
 {
     ImGuiLayoutState* layout_state = (ImGuiLayoutState*)hook->UserData;
 
@@ -819,7 +819,7 @@ static void ImGui::BalanceChildLayouts(ImGuiLayout& layout)
 
 static ImGuiLayoutItem* ImGui::GenerateLayoutItem(ImGuiLayout& layout, ImGuiLayoutItemType type)
 {
-    ImGuiContext& g = *GImGui;
+    //ImGuiContext& g = *GImGui;
     IM_ASSERT(layout.CurrentItemIndex <= layout.Items.Size);
 
     if (layout.CurrentItemIndex < layout.Items.Size)
