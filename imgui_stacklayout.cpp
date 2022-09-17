@@ -39,6 +39,7 @@ Index of this file:
 // - EndHorizontal/EndVertical()                user ends the layout
 //-----------------------------------------------------------------------------
 
+#include <cstdint>
 
 //-----------------------------------------------------------------------------
 // [SECTION] Header mess
@@ -55,7 +56,6 @@ Index of this file:
 #define IMGUI_DEFINE_MATH_OPERATORS
 #endif
 #include "imgui_internal.h"
-
 
 //-----------------------------------------------------------------------------
 // [SECTION] Stack layout: Forward declarations
